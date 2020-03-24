@@ -15,3 +15,5 @@
 licenses(["notice"])  # Apache 2.0
 
 exports_files(["LICENSE"])
+load("@rules_pcl//bzl:pcl.bzl", "pcl_config")
+pcl_config()

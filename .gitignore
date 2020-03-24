@@ -4,5 +4,6 @@ bazel-genfiles
 bazel-mediapipe-ioss
 bazel-out
 bazel-testlogs
+bazel-mediapipe_ouster
 mediapipe/MediaPipe.xcodeproj
 mediapipe/MediaPipe.tulsiproj/*.tulsiconf-user

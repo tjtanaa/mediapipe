@@ -16,7 +16,8 @@
 licenses(["notice"])  # Apache License 2.0
 
 exports_files(["LICENSE"])
-
+exports_files(["glog.BUILD"])
+exports_files(["eigen3.BUILD"])
 package(default_visibility = ["//visibility:public"])
 
 cc_library(

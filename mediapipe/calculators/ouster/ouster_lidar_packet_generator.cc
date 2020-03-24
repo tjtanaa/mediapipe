@@ -12,33 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <unistd.h>
-#include <atomic>
-#include <cmath>
-#include <csignal>
-#include <cstdlib>
-
-// How to include Eigen
-// https://stackoverflow.com/questions/56172620/how-to-build-a-simple-c-demo-using-eigen-with-bazel
-#include <Eigen/Eigen>
-#include <fstream>
 #include <iostream>
-#include <iterator>
-#include <memory>
-#include <sstream>
-#include <string>
-#include <thread>
-#include <vector>
 
-
-#include "os1.h"
-#include "os1_packet.h"
-#include "os1_util.h"
-#include "lidar_scan.h"
-
-// original
 #include "mediapipe/calculators/tensorflow/tensor_to_image_frame_calculator.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
+#include "mediapipe/framework/formats/image_frame.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
 #include "mediapipe/framework/port/status_macros.h"
@@ -65,7 +43,7 @@ constexpr char kTensor[] = "TENSOR";
 //  ImageFrame containing the values of the tensor cast as uint8 (SRGB or GRAY8)
 //
 // Possible extensions: support other input ranges, maybe 4D tensors.
-class PointCloudGenerator : public CalculatorBase {
+class TensorToImageFrameCalculator : public CalculatorBase {
  public:
   static ::mediapipe::Status GetContract(CalculatorContract* cc);
 
@@ -76,9 +54,9 @@ class PointCloudGenerator : public CalculatorBase {
   float scale_factor_;
 };
 
-REGISTER_CALCULATOR(PointCloudGenerator);
+REGISTER_CALCULATOR(TensorToImageFrameCalculator);
 
-::mediapipe::Status PointCloudGenerator::GetContract(
+::mediapipe::Status TensorToImageFrameCalculator::GetContract(
     CalculatorContract* cc) {
   RET_CHECK_EQ(cc->Inputs().NumEntries(), 1)
       << "Only one input stream is supported.";
@@ -95,14 +73,14 @@ REGISTER_CALCULATOR(PointCloudGenerator);
   return ::mediapipe::OkStatus();
 }
 
-::mediapipe::Status PointCloudGenerator::Open(CalculatorContext* cc) {
+::mediapipe::Status TensorToImageFrameCalculator::Open(CalculatorContext* cc) {
   scale_factor_ =
       cc->Options<TensorToImageFrameCalculatorOptions>().scale_factor();
   cc->SetOffset(TimestampDiff(0));
   return ::mediapipe::OkStatus();
 }
 
-::mediapipe::Status PointCloudGenerator::Process(
+::mediapipe::Status TensorToImageFrameCalculator::Process(
     CalculatorContext* cc) {
   const tf::Tensor& input_tensor = cc->Inputs().Tag(kTensor).Get<tf::Tensor>();
   int32 depth = 1;
