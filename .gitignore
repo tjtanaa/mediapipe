@@ -7,3 +7,6 @@ bazel-testlogs
 bazel-mediapipe_ouster
 mediapipe/MediaPipe.xcodeproj
 mediapipe/MediaPipe.tulsiproj/*.tulsiconf-user
+mediapipe/calculators/tensorflow/testdata/tensorflow_saved_model/RandLA-Net_builder_v2/
+mediapipe/calculators/tensorflow/testdata/tensorflow_saved_model/RandLA-Net_builder_v2_20000/
+bazel-mediapipe
