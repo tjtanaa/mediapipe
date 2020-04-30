@@ -580,7 +580,7 @@
 //
 // Converts vector<float> (or vector<vector<float>>) to 1D (or 2D) tf::Tensor.
 
-// #include "mediapipe/calculators/tensorflow/vector_float_to_tensor_calculator_options.pb.h"
+#include "mediapipe/calculators/tensorflow/point_cloud_to_randlanet_format_calculator_options.pb.h"
 #include "mediapipe/framework/calculator_framework.h"
 #include "mediapipe/framework/port/ret_check.h"
 #include "mediapipe/framework/port/status.h"
@@ -597,37 +597,11 @@ namespace tf = ::tensorflow;
 
 const std::string InputTag[] = {"POINT_CLOUD"};
 
-// const std::string OutputTag[] = {"NEIGHBOR_INDEX_0",
-//                                 "NEIGHBOR_INDEX_1",
-//                                 "NEIGHBOR_INDEX_2",
-//                                 "NEIGHBOR_INDEX_3",
-//                                 "NEIGHBOR_INDEX_4",
-//                                 "POOL_I_0",
-//                                 "POOL_I_1",
-//                                 "POOL_I_2",
-//                                 "POOL_I_3",
-//                                 "POOL_I_4",
-//                                 "UP_I_0",
-//                                 "UP_I_1",
-//                                 "UP_I_2",
-//                                 "UP_I_3",
-//                                 "UP_I_4",
-//                                 "BATCH_XYZ_0",
-//                                 "BATCH_XYZ_1",
-//                                 "BATCH_XYZ_2",
-//                                 "BATCH_XYZ_3",
-//                                 "BATCH_XYZ_4",
-//                                 "BATCH_FEATURE"};
 const std::string OutputTag[] = {"NEIGHBOR_INDEX_0",
                                 "NEIGHBOR_INDEX_1",
                                 "NEIGHBOR_INDEX_2",
                                 "NEIGHBOR_INDEX_3",
                                 "NEIGHBOR_INDEX_4",
-                                "SUBPOINTS_0",
-                                "SUBPOINTS_1",
-                                "SUBPOINTS_2",
-                                "SUBPOINTS_3",
-                                "SUBPOINTS_4",
                                 "POOL_I_0",
                                 "POOL_I_1",
                                 "POOL_I_2",
@@ -651,37 +625,6 @@ const std::string OutputTag[] = {"NEIGHBOR_INDEX_0",
 // It will hold DT_FLOAT values.
 //
 // Example config:
-// node {
-//   calculator: "PointCloudToRandlanetFormatCalculator"
-    // input_side_packet: "SESSION:tf_model"
-    // input_stream: "POINT_CLOUD:point_cloud_tensor"
-    // output_stream: "NEIGHBOR_INDEX_0:NEIGHBOR_INDEX_0_tensor"
-    // output_stream: "NEIGHBOR_INDEX_1:NEIGHBOR_INDEX_1_tensor"
-    // output_stream: "NEIGHBOR_INDEX_2:NEIGHBOR_INDEX_2_tensor"
-    // output_stream: "NEIGHBOR_INDEX_3:NEIGHBOR_INDEX_3_tensor"
-    // output_stream: "NEIGHBOR_INDEX_4:NEIGHBOR_INDEX_4_tensor"
-    // output_stream: "SUBPOINTS_0:SUBPOINTS_0_tensor"
-    // output_stream: "SUBPOINTS_1:SUBPOINTS_1_tensor"
-    // output_stream: "SUBPOINTS_2:SUBPOINTS_2_tensor"
-    // output_stream: "SUBPOINTS_3:SUBPOINTS_3_tensor"
-    // output_stream: "SUBPOINTS_4:SUBPOINTS_4_tensor"
-    // output_stream: "POOL_I_0:POOL_I_0_tensor"
-    // output_stream: "POOL_I_1:POOL_I_1_tensor"
-    // output_stream: "POOL_I_2:POOL_I_2_tensor"
-    // output_stream: "POOL_I_3:POOL_I_3_tensor"
-    // output_stream: "POOL_I_4:POOL_I_4_tensor"
-    // output_stream: "UP_I_0:UP_I_0_tensor"
-    // output_stream: "UP_I_1:UP_I_1_tensor"
-    // output_stream: "UP_I_2:UP_I_2_tensor"
-    // output_stream: "UP_I_3:UP_I_3_tensor"
-    // output_stream: "UP_I_4:UP_I_4_tensor"
-    // output_stream: "BATCH_XYZ_0:BATCH_XYZ_0_tensor"
-    // output_stream: "BATCH_XYZ_1:BATCH_XYZ_1_tensor"
-    // output_stream: "BATCH_XYZ_2:BATCH_XYZ_2_tensor"
-    // output_stream: "BATCH_XYZ_3:BATCH_XYZ_3_tensor"
-    // output_stream: "BATCH_XYZ_4:BATCH_XYZ_4_tensor"
-    // output_stream: "BATCH_FEATURE:BATCH_FEATURE_tensor"
-// }
 class PointCloudToRandlanetFormatCalculator : public CalculatorBase {
  public:
   static ::mediapipe::Status GetContract(CalculatorContract* cc);
@@ -689,30 +632,21 @@ class PointCloudToRandlanetFormatCalculator : public CalculatorBase {
   ::mediapipe::Status Open(CalculatorContext* cc) override;
   ::mediapipe::Status Process(CalculatorContext* cc) override;
 
-//  private:
-//   PointCloudToRandlanetFormatCalculatorOptions options_;
+ private:
+  PointCloudToRandlanetFormatCalculatorOptions options_;
 };
 REGISTER_CALCULATOR(PointCloudToRandlanetFormatCalculator);
 
 ::mediapipe::Status PointCloudToRandlanetFormatCalculator::GetContract(
     CalculatorContract* cc) {
-//   const auto& options = cc->Options<PointCloudToRandlanetFormatCalculatorOptions>();
   // Start with only one input packet.
   RET_CHECK_EQ(cc->Inputs().NumEntries(), 1)
       << "Only one input stream is supported.";
-//   if (options.input_size() == 4) {
-//     cc->Inputs().Index(0).Set<tf::Tensor>(
-//         /* "Input vector<vector<float>>." */);
-//   }else {
-//     LOG(FATAL) << "input size not supported";
-//   }
-  
     cc->Inputs().Tag(InputTag[0]).Set<tf::Tensor>(
         /* "Input vector<vector<float>>." */);
   RET_CHECK_EQ(cc->Outputs().NumEntries(), 21)
       << "Must have 21 output streams.";
-    for(int i = 0 ; i < 27;  i ++){
-      if(i > 4 & i< 10){continue;}
+    for(int i = 0 ; i < 21;  i ++){
       // std::cout << OutputTag[i] << std::endl;
       cc->Outputs().Tag(OutputTag[i]).Set<tf::Tensor>(
           // Output stream with data as tf::Tensor and the same TimeSeriesHeader.
@@ -723,7 +657,7 @@ REGISTER_CALCULATOR(PointCloudToRandlanetFormatCalculator);
 }
 
 ::mediapipe::Status PointCloudToRandlanetFormatCalculator::Open(CalculatorContext* cc) {
-//   options_ = cc->Options<PointCloudToRandlanetFormatCalculatorOptions>();
+  options_ = cc->Options<PointCloudToRandlanetFormatCalculatorOptions>();
   return ::mediapipe::OkStatus();
 }
 
@@ -733,13 +667,17 @@ REGISTER_CALCULATOR(PointCloudToRandlanetFormatCalculator);
 std::cout << "PROCESS POINT CLOUD" << std::endl;
 
 // The input point cloud has been stored in a tensor object
-  const int init_batch_size = 1;
-  const int init_n_pts = 65536 ;//32768;
-  const int init_n_features = 3;
-  const int init_n_layers = 5;
-  const int K_cpp = 16; // hardcode parameter
-  const int sub_sampling_ratio[init_n_layers] = {4,4,4,4,2};
-
+  const int init_batch_size = options_.batch_size();
+  const int init_n_pts = options_.npts();
+  const int init_n_features = options_.n_features();
+  const int init_n_layers = options_.n_layers();
+  const int K_cpp = options_.k_cpp(); // hardcode parameter
+  const int sub_sampling_ratio[init_n_layers] = {4,4,4,4,2}; // hardcode parameter
+  std::cout << "Options Parameters: " << std::to_string(init_batch_size) << "\t" <<
+            std::to_string(init_n_pts) << "\t" <<
+            std::to_string(init_n_features) << "\t" <<
+            std::to_string(init_n_layers) << "\t" <<
+            std::to_string(K_cpp) << "\t" << std::endl;
 
   tf::TensorShape point_tensor_shape({init_batch_size, init_n_pts, init_n_features});
 
@@ -766,19 +704,11 @@ std::cout << "PROCESS POINT CLOUD" << std::endl;
   }    
 //   std::string batch_feature_tensor_name = "BATCH_FEATURE_tensor";
 
-//   MP_ASSERT_OK(graph.AddPacketToInputStream(
-    //   batch_feature_tensor_name,
-    //   Adopt(temp_batch_feature_tensor.release()).At(Timestamp(0))));
-//   MP_ASSERT_OK(graph.CloseInputStream(batch_feature_tensor_name));
     // std::cout << "temp_batch_feature_tensor.release()" << OutputTag[26-1] << std::endl;
-    cc->Outputs().Tag(OutputTag[26-1]).Add(temp_batch_feature_tensor.release(), cc->InputTimestamp());
+    cc->Outputs().Tag(OutputTag[21-1]).Add(temp_batch_feature_tensor.release(), cc->InputTimestamp());
 // =======
   for(int layer = 0; layer < init_n_layers; layer++ ){
     std::cout << "Layer: " << layer << std::endl;
-    // const int batch_size = temp_point_tensor->dim_size(0);
-    // const int npts = temp_point_tensor->dim_size(1);
-    // const int dim = temp_point_tensor->dim_size(2);
-    // const int nqueries = temp_point_tensor->dim_size(1);
 
     const int batch_size = temp_point_tensor->dim_size(0);
     const int npts = temp_point_tensor->dim_size(1);
@@ -808,8 +738,6 @@ std::cout << "PROCESS POINT CLOUD" << std::endl;
     // std::cout << pool_i_tensor_shape << std::endl;
     // std::cout << up_i_tensor_shape << std::endl;
     // start to compute
-    // auto pt_tensor = temp_point_tensor->flat<float>().data();
-    // auto q_tensor = temp_point_tensor->flat<float>().data();
     auto pt_tensor = temp_point_tensor->flat<float>().data();
     auto q_tensor = temp_point_tensor->flat<float>().data();
     auto neigh_idx_flat = neigh_idx_tensor->flat<long long int>().data();
@@ -834,14 +762,6 @@ std::cout << "PROCESS POINT CLOUD" << std::endl;
       }
     }    
 
-    // // move pool_i from int64 to int 32
-    // for (int r = 0; r < npts/sub_sampling_ratio[layer] ; ++r) {
-    //   for (int c = 0; c < K_cpp; ++c) {
-    //     pool_i_tensor_32->tensor<int, 3>()(0, r, c) = (int) neigh_idx_tensor->tensor<long long int, 3>()(0, r, c);
-    //     // std::cout << pool_i_tensor.tensor<long long int, 3>()(0, r, c) << std::endl;
-    //   }
-    // }    
-
     // std::cout << "subpoint "  << npts/sub_sampling_ratio[layer] << std::endl;
     for (int r = 0; r < npts/sub_sampling_ratio[layer] ; ++r) {
       for (int c = 0; c < dim; ++c) {
@@ -852,25 +772,12 @@ std::cout << "PROCESS POINT CLOUD" << std::endl;
       }
     }   
 
-    // // move int 64 to int32
-    // for (int r = 0; r < npts/sub_sampling_ratio[layer] ; ++r) {
-    //   for (int c = 0; c < K_cpp; ++c) {
-    //     neigh_idx_tensor_32->tensor<int, 3>()(0, r, c) = (int) neigh_idx_tensor->tensor<long long int, 3>()(0, r, c);
-    //     // std::cout << pool_i_tensor.tensor<long long int, 3>()(0, r, c) << std::endl;
-    //   }
-    // }  
-    
 
 
     // std::string temp_point_tensor_name = "BATCH_XYZ_" + std::to_string(layer) + "_tensor";
 
-    // MP_ASSERT_OK(graph.AddPacketToInputStream(
-    //     temp_point_tensor_name,
-    //     Adopt(temp_point_tensor.release()).At(Timestamp(0))));
-    // MP_ASSERT_OK(graph.CloseInputStream(temp_point_tensor_name));
-
-    std::cout << "temp_point_tensor.release()" << OutputTag[20+layer] << std::endl;
-    cc->Outputs().Tag(OutputTag[20+layer]).Add(temp_point_tensor.release(), cc->InputTimestamp());
+    std::cout << "temp_point_tensor.release()" << OutputTag[15+layer] << std::endl;
+    cc->Outputs().Tag(OutputTag[15+layer]).Add(temp_point_tensor.release(), cc->InputTimestamp());
 
     // std::cout << "delete temp_point_tensor " << std::endl;
     // temp_point_tensor.release();
@@ -921,21 +828,11 @@ std::cout << "PROCESS POINT CLOUD" << std::endl;
 
     // std::string neigh_idx_tensor_name = "NEIGHBOR_INDEX_" + std::to_string(layer) + "_tensor";
 
-    // MP_ASSERT_OK(graph.AddPacketToInputStream(
-    //     neigh_idx_tensor_name,
-    //     Adopt(neigh_idx_tensor.release()).At(Timestamp(0))));
-    // MP_ASSERT_OK(graph.CloseInputStream(neigh_idx_tensor_name));
-
     std::cout << "neigh_idx_tensor.release()" << OutputTag[layer] << std::endl;
     cc->Outputs().Tag(OutputTag[layer]).Add(neigh_idx_tensor.release(), cc->InputTimestamp());
 
     // std::string sub_points_tensor_name = "SUBPOINTS_" + std::to_string(layer) + "_tensor";
 
-    // MP_ASSERT_OK(graph.AddPacketToInputStream(
-    //     sub_points_tensor_name,
-    //     Adopt(sub_points_tensor.release()).At(Timestamp(0))));
-    // MP_ASSERT_OK(graph.CloseInputStream(sub_points_tensor_name));
-    
     // std::cout << "sub_points_tensor.release()" << OutputTag[5 +layer]<< std::endl;
     // cc->Outputs().Tag(OutputTag[5 +layer]).Add(sub_points_tensor.release(), cc->InputTimestamp());
 
@@ -943,23 +840,13 @@ std::cout << "PROCESS POINT CLOUD" << std::endl;
 
     // std::string pool_i_tensor_name = "POOL_I_" + std::to_string(layer) + "_tensor";
 
-    // MP_ASSERT_OK(graph.AddPacketToInputStream(
-    //     pool_i_tensor_name,
-    //     Adopt(pool_i_tensor.release()).At(Timestamp(0))));
-    // MP_ASSERT_OK(graph.CloseInputStream(pool_i_tensor_name));
-
-    std::cout << "pool_i_tensor.release()" << OutputTag[10 +layer] << std::endl;
-    cc->Outputs().Tag(OutputTag[10 + layer]).Add(pool_i_tensor.release(), cc->InputTimestamp());
+    std::cout << "pool_i_tensor.release()" << OutputTag[5 +layer] << std::endl;
+    cc->Outputs().Tag(OutputTag[5 + layer]).Add(pool_i_tensor.release(), cc->InputTimestamp());
 
     // std::string up_i_tensor_name = "UP_I_" + std::to_string(layer) + "_tensor";
 
-    // MP_ASSERT_OK(graph.AddPacketToInputStream(
-    //     up_i_tensor_name,
-    //     Adopt(up_i_tensor.release()).At(Timestamp(0))));
-    // MP_ASSERT_OK(graph.CloseInputStream(up_i_tensor_name));
-
-    std::cout << "up_i_tensor.release()" << OutputTag[15 +layer] << std::endl;
-    cc->Outputs().Tag(OutputTag[15 +layer]).Add(up_i_tensor.release(), cc->InputTimestamp());
+    std::cout << "up_i_tensor.release()" << OutputTag[10 +layer] << std::endl;
+    cc->Outputs().Tag(OutputTag[10 +layer]).Add(up_i_tensor.release(), cc->InputTimestamp());
     // neigh_idx_tensor.release();
     // sub_points_tensor.release();
     // pool_i_tensor.release();

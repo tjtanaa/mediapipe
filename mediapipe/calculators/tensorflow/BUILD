@@ -1203,6 +1203,20 @@ filegroup(
 )
 
 
+proto_library(
+    name = "point_cloud_to_randlanet_format_calculator_options_proto",
+    srcs = ["point_cloud_to_randlanet_format_calculator_options.proto"],
+    visibility = ["//visibility:public"],
+    deps = ["//mediapipe/framework:calculator_proto"],
+)
+
+mediapipe_cc_proto_library(
+    name = "point_cloud_to_randlanet_format_calculator_options_cc_proto",
+    srcs = ["point_cloud_to_randlanet_format_calculator_options.proto"],
+    cc_deps = ["//mediapipe/framework:calculator_cc_proto"],
+    visibility = ["//visibility:public"],
+    deps = [":point_cloud_to_randlanet_format_calculator_options_proto"],
+)
 
 cc_library(
     name = "point_cloud_to_randlanet_format_calculator",
@@ -1214,8 +1228,39 @@ cc_library(
         "//mediapipe/framework/port:status",
         "//mediapipe/framework/port:ret_check",
         "@org_tensorflow//tensorflow/core:framework",
+        ":point_cloud_to_randlanet_format_calculator_options_cc_proto"
     ],
     alwayslink = 1,
+)
+
+
+cc_test(
+    name = "point_cloud_to_randlanet_format_calculator_test",
+    srcs = ["point_cloud_to_randlanet_format_calculator_test.cc"],
+    linkstatic = 1,
+    deps = [
+        "//mediapipe/framework:calculator_cc_proto",
+        "//mediapipe/framework:calculator_framework",
+        "//mediapipe/framework:calculator_runner",
+        "//mediapipe/framework:packet",
+        "//mediapipe/framework/deps:file_path",
+        "//mediapipe/framework/port:gtest_main",
+        "//mediapipe/framework/port:parse_text_proto",
+        "//mediapipe/framework/tool:tag_map_helper",
+        "//mediapipe/framework/tool:validate_type",
+        "@com_google_absl//absl/strings",
+        "@org_tensorflow//tensorflow/core:all_kernels",
+        "@org_tensorflow//tensorflow/core:direct_session",
+        "//mediapipe/framework/port:opencv_imgcodecs",
+        "//mediapipe/framework/port:opencv_core",
+        "//mediapipe/framework/port:opencv_highgui",
+        "//mediapipe/framework/port:opencv_imgproc",
+        "//mediapipe/framework/port:opencv_features2d",
+        "//mediapipe/framework/port:opencv_calib3d",
+        
+        "//mediapipe/calculators/tensorflow/tensorflow_nearest_neighbor/cc/kernels:knn",
+        ":point_cloud_to_randlanet_format_calculator",
+    ],
 )
 
 
