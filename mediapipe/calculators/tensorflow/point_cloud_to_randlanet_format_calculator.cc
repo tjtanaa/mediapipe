@@ -664,7 +664,7 @@ REGISTER_CALCULATOR(PointCloudToRandlanetFormatCalculator);
 ::mediapipe::Status PointCloudToRandlanetFormatCalculator::Process(
     CalculatorContext* cc) {
 
-std::cout << "PROCESS POINT CLOUD" << std::endl;
+// std::cout << "PROCESS POINT CLOUD" << std::endl;
 
 // The input point cloud has been stored in a tensor object
   const int init_batch_size = options_.batch_size();
@@ -673,11 +673,11 @@ std::cout << "PROCESS POINT CLOUD" << std::endl;
   const int init_n_layers = options_.n_layers();
   const int K_cpp = options_.k_cpp(); // hardcode parameter
   const int sub_sampling_ratio[init_n_layers] = {4,4,4,4,2}; // hardcode parameter
-  std::cout << "Options Parameters: " << std::to_string(init_batch_size) << "\t" <<
-            std::to_string(init_n_pts) << "\t" <<
-            std::to_string(init_n_features) << "\t" <<
-            std::to_string(init_n_layers) << "\t" <<
-            std::to_string(K_cpp) << "\t" << std::endl;
+  // std::cout << "Options Parameters: " << std::to_string(init_batch_size) << "\t" <<
+  //           std::to_string(init_n_pts) << "\t" <<
+  //           std::to_string(init_n_features) << "\t" <<
+  //           std::to_string(init_n_layers) << "\t" <<
+  //           std::to_string(K_cpp) << "\t" << std::endl;
 
   tf::TensorShape point_tensor_shape({init_batch_size, init_n_pts, init_n_features});
 
@@ -688,9 +688,9 @@ std::cout << "PROCESS POINT CLOUD" << std::endl;
   for (int r = 0; r < init_n_pts ; ++r) {
     for (int c = 0; c < init_n_features; ++c) {
       temp_point_tensor->tensor<float, 3>()(0, r, c) = point_tensor.tensor<float, 3>()(0, r, c);
-      if(r == 0){
-        std::cout << "r " << r <<  std::to_string(point_tensor.tensor<float, 3>()(0, r, c)) << std::endl;
-      }
+      // if(r == 0){
+      //   std::cout << "r " << r <<  std::to_string(point_tensor.tensor<float, 3>()(0, r, c)) << std::endl;
+      // }
     }
   }
 
@@ -708,15 +708,15 @@ std::cout << "PROCESS POINT CLOUD" << std::endl;
     cc->Outputs().Tag(OutputTag[21-1]).Add(temp_batch_feature_tensor.release(), cc->InputTimestamp());
 // =======
   for(int layer = 0; layer < init_n_layers; layer++ ){
-    std::cout << "Layer: " << layer << std::endl;
+    // std::cout << "Layer: " << layer << std::endl;
 
     const int batch_size = temp_point_tensor->dim_size(0);
     const int npts = temp_point_tensor->dim_size(1);
     const int dim = temp_point_tensor->dim_size(2);
     const int nqueries = temp_point_tensor->dim_size(1);
 
-    std::cout << "layer " << layer  << "npts " << npts << "dim " << dim << "nqueries " << nqueries << std::endl;
-    std::cout << "npts/sub_sampling_ratio[layer] " << npts/sub_sampling_ratio[layer] << std::endl;
+    // std::cout << "layer " << layer  << "npts " << npts << "dim " << dim << "nqueries " << nqueries << std::endl;
+    // std::cout << "npts/sub_sampling_ratio[layer] " << npts/sub_sampling_ratio[layer] << std::endl;
     // create intermediate variables
     tf::TensorShape neigh_idx_tensor_shape({batch_size, nqueries, K_cpp});
     auto neigh_idx_tensor = ::absl::make_unique<tf::Tensor>(tf::DT_INT64, neigh_idx_tensor_shape);
@@ -780,7 +780,7 @@ std::cout << "PROCESS POINT CLOUD" << std::endl;
 
     // std::string temp_point_tensor_name = "BATCH_XYZ_" + std::to_string(layer) + "_tensor";
 
-    std::cout << "temp_point_tensor.release()" << OutputTag[15+layer] << std::endl;
+    // std::cout << "temp_point_tensor.release()" << OutputTag[15+layer] << std::endl;
     cc->Outputs().Tag(OutputTag[15+layer]).Add(temp_point_tensor.release(), cc->InputTimestamp());
 
     // std::cout << "delete temp_point_tensor " << std::endl;
@@ -828,7 +828,7 @@ std::cout << "PROCESS POINT CLOUD" << std::endl;
 
     // std::string neigh_idx_tensor_name = "NEIGHBOR_INDEX_" + std::to_string(layer) + "_tensor";
 
-    std::cout << "neigh_idx_tensor.release()" << OutputTag[layer] << std::endl;
+    // std::cout << "neigh_idx_tensor.release()" << OutputTag[layer] << std::endl;
     cc->Outputs().Tag(OutputTag[layer]).Add(neigh_idx_tensor.release(), cc->InputTimestamp());
 
     // std::string sub_points_tensor_name = "SUBPOINTS_" + std::to_string(layer) + "_tensor";
@@ -840,21 +840,18 @@ std::cout << "PROCESS POINT CLOUD" << std::endl;
 
     // std::string pool_i_tensor_name = "POOL_I_" + std::to_string(layer) + "_tensor";
 
-    std::cout << "pool_i_tensor.release()" << OutputTag[5 +layer] << std::endl;
+    // std::cout << "pool_i_tensor.release()" << OutputTag[5 +layer] << std::endl;
     cc->Outputs().Tag(OutputTag[5 + layer]).Add(pool_i_tensor.release(), cc->InputTimestamp());
 
     // std::string up_i_tensor_name = "UP_I_" + std::to_string(layer) + "_tensor";
 
-    std::cout << "up_i_tensor.release()" << OutputTag[10 +layer] << std::endl;
+    // std::cout << "up_i_tensor.release()" << OutputTag[10 +layer] << std::endl;
     cc->Outputs().Tag(OutputTag[10 +layer]).Add(up_i_tensor.release(), cc->InputTimestamp());
-    // neigh_idx_tensor.release();
-    // sub_points_tensor.release();
-    // pool_i_tensor.release();
-    // up_i_tensor.release();
+
   }
   temp_point_tensor.release();
 
-  std::cout << "DONE POINT CLOUD TO RANDLANET FORMAT CALCULATOR" << std::endl;
+  // std::cout << "DONE POINT CLOUD TO RANDLANET FORMAT CALCULATOR" << std::endl;
   return ::mediapipe::OkStatus();
 }
 
