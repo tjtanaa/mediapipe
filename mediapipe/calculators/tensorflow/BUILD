@@ -1292,8 +1292,6 @@ cc_test(
         "//mediapipe/framework/port:opencv_imgproc",
         "//mediapipe/framework/port:opencv_features2d",
         "//mediapipe/framework/port:opencv_calib3d",
-        
-        "@org_tensorflow//tensorflow/c:c_api",
         "//mediapipe/calculators/tensorflow/tensorflow_nearest_neighbor/cc/kernels:knn",
         ":point_cloud_to_randlanet_format_calculator",
     ],

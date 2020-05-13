@@ -365,6 +365,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
     }
 
     if (batch_timestamps_.size() == options_.batch_size()) {
+      // std::cout << "(batch_timestamps_.size() == options_.batch_size())" << std::endl;
       MP_RETURN_IF_ERROR(OutputBatch(cc));
     }
     return ::mediapipe::OkStatus();
@@ -391,7 +392,9 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
     for (auto& keyed_tensors : input_tensor_batches_) {
       if (options_.batch_size() == 1) {
         // Short circuit to avoid the cost of deep copying tensors in concat.
+        // std::cout << "Short circuit to avoid the cost of deep copying tensors in concat." << std::endl;
         if (!keyed_tensors.second.empty()) {
+          // std::cout << "keyed_tensors.second.empty()" << std::endl;
           input_tensors.emplace_back(tag_to_tensor_map_[keyed_tensors.first],
                                      keyed_tensors.second[0]);
         } else {
@@ -446,6 +449,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
 #endif
       tf_status = session_->Run(input_tensors, output_tensor_names,
                                 {} /* target_node_names */, &outputs);
+      std::cout << "Run Status: " <<  tf_status.ToString()  << std::endl;
     }
 
     if (session_run_throttle != nullptr) {
@@ -455,7 +459,7 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
     // RET_CHECK on the tf::Status object itself in order to print an
     // informative error message.
     RET_CHECK(tf_status.ok()) << "Run failed: " << tf_status.ToString();
-
+    std::cout << "Run Status: " <<  tf_status.ToString()  << std::endl;
     const int64 run_end_time = absl::ToUnixMicros(clock_->TimeNow());
     cc->GetCounter(kTotalSessionRunsTimeUsecsCounterSuffix)
         ->IncrementBy(run_end_time - run_start_time);
@@ -475,7 +479,9 @@ class TensorFlowInferenceCalculator : public CalculatorBase {
       if (options_.batch_size() == 1) {
         if (cc->Outputs().HasTag(output_name_in_signature[i])) {
           tf::Tensor output_tensor(outputs[i]);
+          std::cout << "post processing data" << std::endl;
           RET_CHECK_OK(RemoveBatchDimension(&output_tensor));
+          std::cout << "successfully post processing data" << std::endl;
           cc->Outputs()
               .Tag(output_name_in_signature[i])
               .Add(new tf::Tensor(output_tensor), batch_timestamps_[0]);

@@ -772,6 +772,10 @@ std::cout << "PROCESS POINT CLOUD" << std::endl;
       }
     }   
 
+    auto sub_points_flat = sub_points_tensor->flat<float>().data();
+    auto q_tensor_2 = temp_point_tensor->flat<float>().data();
+    auto up_i_flat = up_i_tensor->flat<long long int>().data();
+    cpp_knn_batch_omp(sub_points_flat, batch_size, npts/sub_sampling_ratio[layer], dim, q_tensor_2, nqueries, 1, up_i_flat);
 
 
     // std::string temp_point_tensor_name = "BATCH_XYZ_" + std::to_string(layer) + "_tensor";
@@ -793,10 +797,6 @@ std::cout << "PROCESS POINT CLOUD" << std::endl;
         }
     } 
 
-    auto sub_points_flat = sub_points_tensor->flat<float>().data();
-
-    auto up_i_flat = up_i_tensor->flat<long long int>().data();
-    cpp_knn_batch_omp(sub_points_flat, batch_size, npts, dim, q_tensor, nqueries, 1, up_i_flat);
 
     // // cast from int63 to int32
     // for (int r = 0; r < npts ; ++r) {

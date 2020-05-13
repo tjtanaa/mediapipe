@@ -26,7 +26,7 @@ message PointCloudToRandlanetFormatCalculatorOptions {
   // If true, unpack a 2d tensor (matrix) into a vector<vector<float>>. If
   // false, convert a 1d tensor (vector) into a vector<float>.
   optional int32 batch_size = 1 [default = 1];
-  optional int32 npts = 2 [default = 65536];
+  optional int32 npts = 2 [default = 16384];
   // If true, an N-D tensor will be flattened to a vector<float>. This is
   // exclusive with tensor_is_2d.
   optional int32 k_cpp = 3 [default = 16];

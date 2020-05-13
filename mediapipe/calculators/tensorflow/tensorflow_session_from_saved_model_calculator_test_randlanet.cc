@@ -40,7 +40,8 @@
 #include <string>
 #include "mediapipe/calculators/tensorflow/tensorflow_nearest_neighbor/cc/kernels/knn_.h"
 #include <iterator>
-#include "tensorflow/c/c_api.h"
+// #include "tensorflow/c/c_api.h"
+#include "mediapipe/calculators/tensorflow/point_cloud_to_randlanet_format_calculator_options.pb.h"
 
 // #include <opencv2/core/core.hpp>
 // #include <opencv2/highgui/highgui.hpp>
@@ -282,11 +283,12 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
 // consumes the Packet emitted by this factory.
 TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
        ProducesPacketUsableByTensorFlowInferenceCalculator) {
+  // try{
   CalculatorGraphConfig graph_config =
       ::mediapipe::ParseTextProtoOrDie<CalculatorGraphConfig>(
           absl::Substitute(R"(
           input_stream: "POINT_CLOUD:point_cloud_tensor"
-          output_stream: "BATCH_FEATURE:batch_feature_tensor"
+          output_stream: "PROB_LOGITS:softmax_linear"
         node {
           calculator: "PointCloudToRandlanetFormatCalculator"
           input_stream: "POINT_CLOUD:point_cloud_tensor"
@@ -312,17 +314,61 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
           output_stream: "BATCH_XYZ_4:batch_xyz_4_tensor"
           output_stream: "BATCH_FEATURE:batch_feature_tensor"
         }
-      
-  )",options_->DebugString()));
-
+      node {
+        calculator: "TensorFlowInferenceCalculator"
+        input_side_packet: "SESSION:tf_model"
+        input_stream: "NEIGHBOR_INDEX_0:neighbor_index_0_tensor"
+        input_stream: "NEIGHBOR_INDEX_1:neighbor_index_1_tensor"
+        input_stream: "NEIGHBOR_INDEX_2:neighbor_index_2_tensor"
+        input_stream: "NEIGHBOR_INDEX_3:neighbor_index_3_tensor"
+        input_stream: "NEIGHBOR_INDEX_4:neighbor_index_4_tensor"
+        input_stream: "POOL_I_0:pool_i_0_tensor"
+        input_stream: "POOL_I_1:pool_i_1_tensor"
+        input_stream: "POOL_I_2:pool_i_2_tensor"
+        input_stream: "POOL_I_3:pool_i_3_tensor"
+        input_stream: "POOL_I_4:pool_i_4_tensor"
+        input_stream: "UP_I_0:up_i_0_tensor"
+        input_stream: "UP_I_1:up_i_1_tensor"
+        input_stream: "UP_I_2:up_i_2_tensor"
+        input_stream: "UP_I_3:up_i_3_tensor"
+        input_stream: "UP_I_4:up_i_4_tensor"
+        input_stream: "BATCH_XYZ_0:batch_xyz_0_tensor"
+        input_stream: "BATCH_XYZ_1:batch_xyz_1_tensor"
+        input_stream: "BATCH_XYZ_2:batch_xyz_2_tensor"
+        input_stream: "BATCH_XYZ_3:batch_xyz_3_tensor"
+        input_stream: "BATCH_XYZ_4:batch_xyz_4_tensor"
+        input_stream: "BATCH_FEATURE:batch_feature_tensor"
+        output_stream: "PROB_LOGITS:softmax_linear"
+        options {
+          [mediapipe.TensorFlowInferenceCalculatorOptions.ext] {
+            batch_size: 1
+            add_batch_dim_to_tensors: false
+          }
+        }
+      }
+      node {
+        calculator: "TensorFlowSessionFromSavedModelCalculator"
+        output_side_packet: "SESSION:tf_model"
+        options {
+          [mediapipe.TensorFlowSessionFromSavedModelCalculatorOptions.ext]: {
+            $0
+          }
+        }
+      }
+  )"
+, options_->DebugString()));
+  // }
+  // catch (int e){
+  //   std::cout << "An exception occurred. Exception Nr. " << e << '\n';
+  // }
   CalculatorGraph graph;
-  auto graph_i = graph.Initialize(graph_config);
+  // auto graph_i = graph.Initialize(graph_config);
   // std::cout << "================Message error===============" << std::endl;
-  // std::cout << graph_i.error_message() << std::endl;
+  // std::cout << graph_i.ToString() << std::endl;
   
   MP_ASSERT_OK(graph.Initialize(graph_config));
   StatusOrPoller status_or_poller =
-      graph.AddOutputStreamPoller("batch_feature_tensor");
+      graph.AddOutputStreamPoller("softmax_linear");
   ASSERT_TRUE(status_or_poller.ok());
   OutputStreamPoller poller = std::move(status_or_poller.ValueOrDie());
 
@@ -346,7 +392,7 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
 
   // The input point cloud has been stored in a tensor object
   const int init_batch_size = 1;
-  const int init_n_pts = 65536;
+  const int init_n_pts = 65536/4;
   const int init_n_features = 3;
   const int init_n_layers = 5;
   const int K_cpp = 16; // hardcode parameter
@@ -355,22 +401,58 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
   tf::TensorShape point_tensor_shape({init_batch_size, init_n_pts, init_n_features});
   auto point_tensor = ::absl::make_unique<tf::Tensor>(tf::DT_FLOAT, point_tensor_shape);
 
-
-  for (int r = 0; r < init_n_pts ; ++r) {
-    for (int c = 0; c < init_n_features; ++c) {
-      // point_tensor->tensor<float, 3>()(0, r, c) = rand() % 100 /100.0;
-      point_tensor->tensor<float, 3>()(0, r, c) = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/10));
-      // if(r ==0 & c == 0){
-      //   std::cout << "point tensor: " <<std::endl;
-      // }
-      // if (r < 5){
-      //   std::cout << std::to_string(point_tensor->tensor<float, 3>()(0, r, c)) << "\t";
-      //   if(c ==init_n_features-1 ){
-      //     std::cout << std::endl;
-      //   }
-      // }
+  std::ifstream ifile; 
+  ifile.open("/home/tan/tjtanaa/tjtanaa/mediapipe/mediapipe/calculators/tensorflow/testdata/tensorflow_saved_model/RandLA-Net_builder_v2/sample.txt");
+  if(ifile) {
+      std::cout<<"file exists"<< std::endl;
+  } else {
+      std::cout<<"file doesn't exist" << std::endl;
+  }
+  std::string line;
+  size_t pos = 0;
+  std::string delimiter = " ";
+  if (ifile.is_open())
+  {
+    std::cout << "start reading" << std::endl;
+    int r = 0;
+    while ( getline (ifile,line) )
+    {
+      std::string token;
+      int c = 0;
+      while ((pos = line.find(delimiter)) != std::string::npos) {
+          token = line.substr(0, pos);
+          // std::cout << token << " ";
+          point_tensor->tensor<float, 3>()(0, r, c) = std::stod(token);
+          bool flag = (std::abs(point_tensor->tensor<float, 3>()(0, r, c) - std::stod(token)) < 1e-5);
+          if (!flag){
+            std::cout << "Values not equal: " << std::to_string(point_tensor->tensor<float, 3>()(0, r, c)) << std::endl;
+          }
+          line.erase(0, pos + delimiter.length());
+          c++;
+      }
+      // std::cout << std::endl;
+      r++;
     }
-  }   
+    ifile.close();
+  }
+
+
+  // for (int r = 0; r < init_n_pts ; ++r) {
+  //   for (int c = 0; c < init_n_features; ++c) {
+  //     // point_tensor->tensor<float, 3>()(0, r, c) = rand() % 100 /100.0;
+  //     point_tensor->tensor<float, 3>()(0, r, c) = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/10));
+  //     // if(r ==0 & c == 0){
+  //     //   std::cout << "point tensor: " <<std::endl;
+  //     // }
+  //     // if (r < 5){
+  //     //   std::cout << std::to_string(point_tensor->tensor<float, 3>()(0, r, c)) << "\t";
+  //     //   if(c ==init_n_features-1 ){
+  //     //     std::cout << std::endl;
+  //     //   }
+  //     // }
+  //   }
+  // }   
+
   std::string point_cloud_tensor_name = "point_cloud_tensor";
   MP_ASSERT_OK(graph.AddPacketToInputStream(
       point_cloud_tensor_name,
@@ -379,14 +461,19 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
 
   Packet packet;
   ASSERT_TRUE(poller.Next(&packet));
+
+
   // input tensor gets multiplied by [[3, 2, 1]]. Expected output:
   // tf::Tensor expected_multiplication = TensorMatrix1x3(3, -2, 10);
   // EXPECT_EQ(expected_multiplication.DebugString(),
   //           packet.Get<tf::Tensor>().DebugString());
   
-  // packet.Get<tf::Tensor>().DebugString());
-  // auto matrix = packet.Get<tf::Tensor>().matrix<float>();
-  // std::cout << matrix.size() << std::endl;
+  std::cout << packet.Get<tf::Tensor>().DebugString() << std::endl;
+  auto matrix = packet.Get<tf::Tensor>().tensor<float, 2>();
+  std::cout << "matrix size: " << matrix.size() << std::endl;
+  std::cout << matrix(0,0) <<std::endl;
+  std::cout << matrix(0,1) <<std::endl;
+  // std::cout << matrix(2) <<std::endl;
 
   // std::cout << "The Scores of the GTA car" << std::endl;
   // std::cout << packet.Get<tf::Tensor>().DebugString() << std::endl;
@@ -806,6 +893,44 @@ TEST_F(TensorFlowSessionFromSavedModelCalculatorTest,
 //         }
 //       }
 //   )"
+
+
+
+
+// R"(
+//           input_stream: "POINT_CLOUD:point_cloud_tensor"
+//         node {
+//           calculator: "PointCloudToRandlanetFormatCalculator"
+//           input_stream: "POINT_CLOUD:point_cloud_tensor"
+//           output_stream: "NEIGHBOR_INDEX_0:neighbor_index_0_tensor"
+//           output_stream: "NEIGHBOR_INDEX_1:neighbor_index_1_tensor"
+//           output_stream: "NEIGHBOR_INDEX_2:neighbor_index_2_tensor"
+//           output_stream: "NEIGHBOR_INDEX_3:neighbor_index_3_tensor"
+//           output_stream: "NEIGHBOR_INDEX_4:neighbor_index_4_tensor"
+//           output_stream: "POOL_I_0:pool_i_0_tensor"
+//           output_stream: "POOL_I_1:pool_i_1_tensor"
+//           output_stream: "POOL_I_2:pool_i_2_tensor"
+//           output_stream: "POOL_I_3:pool_i_3_tensor"
+//           output_stream: "POOL_I_4:pool_i_4_tensor"
+//           output_stream: "UP_I_0:up_i_0_tensor"
+//           output_stream: "UP_I_1:up_i_1_tensor"
+//           output_stream: "UP_I_2:up_i_2_tensor"
+//           output_stream: "UP_I_3:up_i_3_tensor"
+//           output_stream: "UP_I_4:up_i_4_tensor"
+//           output_stream: "BATCH_XYZ_0:batch_xyz_0_tensor"
+//           output_stream: "BATCH_XYZ_1:batch_xyz_1_tensor"
+//           output_stream: "BATCH_XYZ_2:batch_xyz_2_tensor"
+//           output_stream: "BATCH_XYZ_3:batch_xyz_3_tensor"
+//           output_stream: "BATCH_XYZ_4:batch_xyz_4_tensor"
+//           output_stream: "BATCH_FEATURE:batch_feature_tensor"
+//         }
+//   )"
+
+
+
+
+
+
 
 
 

@@ -18,6 +18,9 @@
 #include "mediapipe/framework/port/gtest.h"
 #include "tensorflow/core/framework/tensor.h"
 #include "tensorflow/core/framework/types.pb.h"
+// #include <iostream>
+#include <fstream>
+
 
 namespace mediapipe {
 
@@ -85,7 +88,7 @@ TEST_F(PointCloudToRandlanetFormatCalculatorTest, ConvertPointCloudToRandlanetFo
   // This test converts a 1 Dimensional Tensor of length M to a Matrix of Mx1.
   SetUpRunner();
   const int init_batch_size = 1;
-  const int init_n_pts = 65536;
+  const int init_n_pts = 65536/4;
   const int init_n_features = 3;
   const int init_n_layers = 5;
   const int K_cpp = 16; // hardcode parameter
@@ -119,13 +122,133 @@ TEST_F(PointCloudToRandlanetFormatCalculatorTest, ConvertPointCloudToRandlanetFo
   EXPECT_EQ(3, output_tensor.dims());
   auto output_tensor_tensor = output_tensor.tensor<long long int, 3>();
 
-for (int r = 0; r < 1 ; ++r) {
-    for (int c = 0; c < K_cpp; ++c) {
-    std::cout << std::to_string(output_tensor_tensor(0,r,c)) << " " ;
+  for (int r = 0; r < 1 ; ++r) {
+      for (int c = 0; c < K_cpp; ++c) {
+      std::cout << std::to_string(output_tensor_tensor(0,r,c)) << " " ;
+      }
+  }
+  std::cout << std::endl;
+}
+
+TEST_F(PointCloudToRandlanetFormatCalculatorTest, ConvertSamplePointCloudToRandlanetFormatTensor) {
+  // This test converts a 1 Dimensional Tensor of length M to a Matrix of Mx1.
+  SetUpRunner();
+  const int init_batch_size = 1;
+  const int init_n_pts = 65536/4;
+  const int init_n_features = 3;
+  const int init_n_layers = 5;
+  const int K_cpp = 16; // hardcode parameter
+  const int sub_sampling_ratio[init_n_layers] = {4,4,4,4,2};
+
+  tf::TensorShape point_tensor_shape({init_batch_size, init_n_pts, init_n_features});
+  auto point_tensor = ::absl::make_unique<tf::Tensor>(tf::DT_FLOAT, point_tensor_shape);
+
+  std::ifstream ifile; 
+  ifile.open("/home/tan/tjtanaa/tjtanaa/mediapipe/mediapipe/calculators/tensorflow/testdata/tensorflow_saved_model/RandLA-Net_builder_v2/sample.txt");
+  if(ifile) {
+      std::cout<<"file exists"<< std::endl;
+  } else {
+      std::cout<<"file doesn't exist" << std::endl;
+  }
+  std::string line;
+  size_t pos = 0;
+  std::string delimiter = " ";
+  if (ifile.is_open())
+  {
+    std::cout << "start reading" << std::endl;
+    int r = 0;
+    while ( getline (ifile,line) )
+    {
+      std::string token;
+      int c = 0;
+      while ((pos = line.find(delimiter)) != std::string::npos) {
+          token = line.substr(0, pos);
+          std::cout << token << " ";
+          point_tensor->tensor<float, 3>()(0, r, c) = std::stod(token);
+          bool flag = (std::abs(point_tensor->tensor<float, 3>()(0, r, c) - std::stod(token)) < 1e-5);
+          if (!flag){
+            std::cout << "Values not equal: " << std::to_string(point_tensor->tensor<float, 3>()(0, r, c)) << std::endl;
+          }
+          line.erase(0, pos + delimiter.length());
+          c++;
+      }
+      std::cout << std::endl;
+      r++;
     }
+    ifile.close();
+  }
+
+  const int64 time = 1234;
+  runner_->MutableInputs()->Tag("POINT_CLOUD").packets.push_back(
+      Adopt(point_tensor.release()).At(Timestamp(time)));
+
+  EXPECT_TRUE(runner_->Run().ok());
+//   auto output_pack = runner_->Outputs();
+//   std::cout << output_pack << std::endl;
+  // const std::vector<Packet>& output_packets =
+  //     runner_->Outputs().Tag("NEIGHBOR_INDEX_4").packets;
+  const std::vector<Packet>& output_packets =
+      runner_->Outputs().Tag("UP_I_0").packets;
+  EXPECT_EQ(1, output_packets.size());
+  
+  EXPECT_EQ(time, output_packets[0].Timestamp().Value());
+  const tf::Tensor& output_tensor = output_packets[0].Get<tf::Tensor>();
+
+  EXPECT_EQ(3, output_tensor.dims());
+  auto output_tensor_tensor = output_tensor.tensor<long long int, 3>();
+
+  // Read the sample output from file and verify with the indices computed by this calculator
+  std::ifstream outputfile; 
+  // outputfile.open("/home/tan/tjtanaa/tjtanaa/mediapipe/mediapipe/calculators/tensorflow/testdata/tensorflow_saved_model/RandLA-Net_builder_v2/encoder_sub_indices_0.txt");
+  outputfile.open("/home/tan/tjtanaa/tjtanaa/mediapipe/mediapipe/calculators/tensorflow/testdata/tensorflow_saved_model/RandLA-Net_builder_v2/decoder_sub_indices_4.txt");
+  if(outputfile) {
+      std::cout<<"file exists"<< std::endl;
+  } else {
+      std::cout<<"file doesn't exist" << std::endl;
+  }
+  // std::string line;
+  pos = 0;
+  // std::string delimiter = " ";
+  if (outputfile.is_open())
+  {
+    std::cout << "start reading" << std::endl;
+    int r = 0;
+    int valid_r = 0;
+    while ( getline (outputfile,line) )
+    {
+      std::string token;
+      int c = 0;
+      while ((pos = line.find(delimiter)) != std::string::npos) {
+          token = line.substr(0, pos);
+          std::cout << token << "-" << std::to_string(output_tensor_tensor(0,r,c)) << " ";
+          bool flag = (std::abs(output_tensor_tensor(0,r,c) - std::stoll(token)) < 1e-7);
+          if (flag){
+            // std::cout << "Values not equal: " << std::endl;
+            std::cout << "Values equal: " ; //<< std::endl;
+            valid_r++;
+          }
+          line.erase(0, pos + delimiter.length());
+          c++;
+      }
+      std::cout << std::endl;
+      r++;
+    }
+    std::cout << "valid_r: " << std::to_string(valid_r) << std::endl;
+    outputfile.close();
+  }
+
+
+
+  for (int r = 0; r < 1 ; ++r) {
+      for (int c = 0; c < K_cpp; ++c) {
+      std::cout << std::to_string(output_tensor_tensor(0,r,c)) << " " ;
+      }
+  }
+  std::cout << std::endl;
 }
-std::cout << std::endl;
-}
+
+
+
 
 
 }  // namespace mediapipe
