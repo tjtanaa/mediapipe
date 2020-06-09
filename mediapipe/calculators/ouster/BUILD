@@ -1,3 +1,9 @@
+
+exports_files(["lidar_scan.h"])
+package(default_visibility = [
+    "//visibility:public",
+])
+
 cc_library(
     name = "jsoncpp",
     srcs = [
@@ -32,6 +38,15 @@ cc_library(
     textual_hdrs = ["src/lib_json/json_valueiterator.inl"],
 )
 
+cc_library(
+    name = "lidar_scan",
+    srcs = ["lidar_scan.h"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "@com_github_open_source_parsers_jsoncpp//:jsoncpp",
+    ],
+    alwayslink = 1,
+)
 
 cc_library(
     name = "os1",

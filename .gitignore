@@ -10,4 +10,6 @@ mediapipe/MediaPipe.tulsiproj/*.tulsiconf-user
 mediapipe/calculators/tensorflow/testdata/tensorflow_saved_model/RandLA-Net_builder_v2/
 mediapipe/calculators/tensorflow/testdata/tensorflow_saved_model/RandLA-Net_builder_v2_20000/
 bazel-mediapipe
+test_2.pcap
+bazel-mediapipe-1.2.0
 mediapipe/calculators/tensorflow/testdata/tensorflow_saved_model/RandLA-Net_builder_v2_tested_worked/
